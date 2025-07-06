@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 가위바위보 대결</title>
+    <title>AI 이미지 분석기</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+        /* Google Fonts에서 'Roboto' 폰트 가져오기 */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
+        /* 전체 페이지 스타일 */
         body {
-            font-family: 'Jua', sans-serif;
-            background-color: #f0f4f8;
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f2f5;
             color: #333;
             display: flex;
             justify-content: center;
@@ -20,271 +22,205 @@
             box-sizing: border-box;
         }
 
+        /* 메인 컨테이너 */
         .container {
             background-color: #ffffff;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             text-align: center;
             width: 100%;
-            max-width: 800px;
+            max-width: 500px;
         }
 
+        /* 제목 스타일 */
         h1 {
             color: #2c3e50;
             margin-top: 0;
+            margin-bottom: 10px;
         }
         
-        #start-button, #play-button {
+        /* 부제목 스타일 */
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 25px;
+        }
+
+        /* 시작 버튼 스타일 */
+        #start-button {
             background-color: #3498db;
             color: white;
             border: none;
-            padding: 15px 30px;
-            font-size: 20px;
-            font-family: 'Jua', sans-serif;
-            border-radius: 10px;
+            padding: 12px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
-            margin-top: 20px;
         }
 
-        #start-button:hover, #play-button:hover {
+        /* 버튼에 마우스를 올렸을 때 */
+        #start-button:hover {
             background-color: #2980b9;
-            transform: translateY(-3px);
+            transform: translateY(-2px);
         }
 
-        .game-area {
-            display: none; /* 초기에는 게임 영역 숨김 */
-            justify-content: space-around;
-            align-items: center;
-            margin-top: 30px;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .player-area, .computer-area {
-            flex-basis: 300px;
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 15px;
-        }
-
-        h2 {
-            margin-top: 0;
-            color: #34495e;
-        }
-
+        /* 웹캠 컨테이너 */
         #webcam-container {
+            margin: 25px auto;
             border-radius: 10px;
             overflow: hidden;
             border: 5px solid #ecf0f1;
             display: inline-block;
-            line-height: 0;
-            width: 250px;
-            height: 250px;
-        }
-
-        #player-choice-text {
-            margin-top: 15px;
-            font-size: 22px;
-            font-weight: bold;
-            color: #3498db;
-            height: 30px;
-        }
-
-        #computer-choice-emoji {
-            font-size: 150px;
-            height: 160px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            line-height: 0; /* 캔버스 아래 추가 공간 제거 */
         }
         
-        #computer-choice-text {
-            margin-top: 15px;
-            font-size: 22px;
-            font-weight: bold;
-            color: #e74c3c;
-            height: 30px;
+        #webcam-container canvas {
+            display: block; /* 기본 여백 제거 */
         }
 
-        .result-display {
-            width: 100%;
+        /* 예측 결과 라벨 컨테이너 */
+        #label-container {
             margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px; /* 항목 사이의 간격 */
         }
 
-        #score-display {
-            font-size: 28px;
+        /* 개별 예측 항목 */
+        .prediction-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        /* 클래스 이름 */
+        .class-name {
+            text-align: left;
             font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 10px;
+            width: 30%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis; /* 이름이 길 경우 ...으로 표시 */
         }
 
-        #result-text {
-            font-size: 36px;
+        /* 진행률 표시줄 컨테이너 */
+        .progress-container {
+            width: 68%;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+            height: 22px;
+            overflow: hidden;
+        }
+
+        /* 실제 진행률 막대 */
+        .progress-bar {
+            height: 100%;
+            background-color: #2ecc71; /* 녹색 */
+            width: 0%; /* JavaScript로 너비 조절 */
+            border-radius: 5px;
+            transition: width 0.2s ease-in-out; /* 부드러운 너비 변경 효과 */
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
             font-weight: bold;
-            height: 50px;
         }
-        /* 결과에 따른 색상 변경 */
-        .win { color: #2ecc71; }
-        .lose { color: #e74c3c; }
-        .draw { color: #95a5a6; }
-
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>AI 가위바위보 대결 ✊✋✌️</h1>
-        <div id="initial-screen">
-            <p>카메라에 손을 보여주고 컴퓨터와 대결하세요!</p>
-            <button type="button" id="start-button" onclick="init()">게임 시작</button>
-        </div>
-        
-        <div class="game-area" id="game-area">
-            <div class="player-area">
-                <h2>나</h2>
-                <div id="webcam-container"></div>
-                <div id="player-choice-text">손을 보여주세요</div>
-            </div>
-            <div class="computer-area">
-                <h2>컴퓨터</h2>
-                <div id="computer-choice-emoji">❔</div>
-                <div id="computer-choice-text">무엇을 낼까?</div>
-            </div>
-            <div class="result-display">
-                <div id="score-display">나 0 : 0 컴퓨터</div>
-                <div id="result-text"></div>
-                <button type="button" id="play-button" onclick="playRound()">가위바위보!</button>
-            </div>
-        </div>
+        <h1>AI 이미지 분석기 📸</h1>
+        <p class="subtitle">카메라에 사물을 비춰보세요!</p>
+        <button type="button" id="start-button" onclick="init()">시작하기</button>
+        <div id="webcam-container"></div>
+        <div id="label-container"></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
     <script type="text/javascript">
-        // 가위바위보 모델 URL
+        // Teachable Machine에서 만든 모델 URL을 여기에 넣으세요.
+        // 이 모델은 가위/바위/보를 인식하는 모델 예시입니다.
         const URL = "https://teachablemachine.withgoogle.com/models/r9-f6UewC/";
 
-        let model, webcam, maxPredictions;
-        let currentPlayerMove = ""; // 플레이어의 현재 동작을 저장할 변수
-        let playerScore = 0;
-        let computerScore = 0;
-        
-        const moves = ["바위", "가위", "보"];
-        const moveEmojis = {
-            "바위": "✊",
-            "가위": "✌️",
-            "보": "✋",
-            "default": "❔"
-        };
-        
-        // DOM 요소 가져오기
-        const gameArea = document.getElementById('game-area');
-        const initialScreen = document.getElementById('initial-screen');
-        const playerChoiceText = document.getElementById('player-choice-text');
-        const computerChoiceEmoji = document.getElementById('computer-choice-emoji');
-        const computerChoiceText = document.getElementById('computer-choice-text');
-        const resultText = document.getElementById('result-text');
-        const scoreDisplay = document.getElementById('score-display');
+        let model, webcam, labelContainer, maxPredictions;
 
-
-        // 게임 초기화 함수
+        // 모델을 로드하고 웹캠을 설정하는 함수
         async function init() {
-            initialScreen.style.display = 'none';
-            gameArea.style.display = 'flex';
-            
             const modelURL = URL + "model.json";
             const metadataURL = URL + "metadata.json";
 
             model = await tmImage.load(modelURL, metadataURL);
             maxPredictions = model.getTotalClasses();
 
-            const flip = true;
-            webcam = new tmImage.Webcam(250, 250, flip);
-            await webcam.setup();
+            const flip = true; // 웹캠 좌우 반전
+            webcam = new tmImage.Webcam(250, 250, flip); // 너비, 높이, 반전 여부
+            await webcam.setup(); // 웹캠 접근 권한 요청
             await webcam.play();
+            window.requestAnimationFrame(loop);
+
+            // 웹캠 캔버스를 DOM에 추가
             document.getElementById("webcam-container").appendChild(webcam.canvas);
             
-            resultText.innerHTML = "카메라에 손을 맞추고 버튼을 누르세요!";
-            
-            window.requestAnimationFrame(loop);
+            // 시작 버튼과 부제목 숨기기
+            document.getElementById("start-button").style.display = 'none';
+            document.querySelector(".subtitle").style.display = 'none';
+
+            // 예측 결과를 표시할 DOM 요소 생성
+            labelContainer = document.getElementById("label-container");
+            for (let i = 0; i < maxPredictions; i++) {
+                const item = document.createElement("div");
+                item.classList.add("prediction-item");
+
+                const name = document.createElement("div");
+                name.classList.add("class-name");
+                name.id = "class-name-" + i;
+
+                const progressContainer = document.createElement("div");
+                progressContainer.classList.add("progress-container");
+
+                const progressBar = document.createElement("div");
+                progressBar.classList.add("progress-bar");
+                progressBar.id = "progress-bar-" + i;
+                
+                progressContainer.appendChild(progressBar);
+                item.appendChild(name);
+                item.appendChild(progressContainer);
+                
+                labelContainer.appendChild(item);
+            }
         }
 
-        // 계속해서 웹캠을 예측하는 루프
+        // 반복해서 예측을 수행하는 루프 함수
         async function loop() {
-            webcam.update();
+            webcam.update(); // 웹캠 프레임 업데이트
             await predict();
             window.requestAnimationFrame(loop);
         }
 
-        // 웹캠 이미지를 통해 플레이어의 동작 예측
+        // 웹캠 이미지를 모델로 예측하는 함수
         async function predict() {
             const prediction = await model.predict(webcam.canvas);
-            let highestProb = 0;
-            let move = "";
-
             for (let i = 0; i < maxPredictions; i++) {
-                if (prediction[i].probability > highestProb) {
-                    highestProb = prediction[i].probability;
-                    move = prediction[i].className;
-                }
-            }
+                const probability = prediction[i].probability;
+                const className = prediction[i].className;
+                const probabilityPercent = (probability * 100).toFixed(1);
 
-            // 일정 확률 이상일 때만 동작으로 인정
-            if (highestProb > 0.9) {
-                currentPlayerMove = move;
-                playerChoiceText.innerHTML = `인식된 손: ${moveEmojis[move]}`;
-            } else {
-                currentPlayerMove = "";
-                playerChoiceText.innerHTML = "손을 보여주세요";
-            }
-        }
+                // DOM 요소 가져오기
+                const classNameElement = document.getElementById("class-name-" + i);
+                const progressBarElement = document.getElementById("progress-bar-" + i);
 
-        // "가위바위보!" 버튼을 눌렀을 때 실행되는 함수
-        function playRound() {
-            if (!currentPlayerMove) {
-                resultText.innerHTML = "손이 인식되지 않았어요. 다시 해보세요!";
-                resultText.className = 'draw';
-                return;
-            }
-
-            // 컴퓨터의 선택
-            const computerMove = moves[Math.floor(Math.random() * moves.length)];
-            
-            // UI 업데이트
-            computerChoiceEmoji.innerHTML = moveEmojis[computerMove];
-            computerChoiceText.innerHTML = `컴퓨터의 선택: ${computerMove}`;
-            
-            // 승패 결정
-            determineWinner(currentPlayerMove, computerMove);
-            
-            // 점수 업데이트
-            scoreDisplay.innerHTML = `나 ${playerScore} : ${computerScore} 컴퓨터`;
-        }
-        
-        // 승패를 결정하는 함수
-        function determineWinner(player, computer) {
-            resultText.className = ''; // 기존 색상 클래스 초기화
-
-            if (player === computer) {
-                resultText.innerHTML = "비겼습니다!";
-                resultText.classList.add('draw');
-            } else if (
-                (player === "바위" && computer === "가위") ||
-                (player === "가위" && computer === "보") ||
-                (player === "보" && computer === "바위")
-            ) {
-                resultText.innerHTML = "이겼습니다! 🎉";
-                resultText.classList.add('win');
-                playerScore++;
-            } else {
-                resultText.innerHTML = "졌습니다... 😥";
-                resultText.classList.add('lose');
-                computerScore++;
+                // 내용 및 스타일 업데이트
+                classNameElement.innerHTML = className;
+                progressBarElement.style.width = probabilityPercent + "%";
+                progressBarElement.innerHTML = probabilityPercent + "%";
             }
         }
-
     </script>
+
 </body>
 </html>
